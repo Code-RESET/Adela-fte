@@ -3,18 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-<title>Code-Reset App</title>
+<title>Expediente Clínico — Dr. Armando de la Fuente</title>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#000000" />
-<link rel="apple-touch-icon" href="assets/icon-192.png" />
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+<meta name="color-scheme" content="light dark" />
+<link rel="apple-touch-icon" href="assets/icon-180.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Code-Reset" />
+<meta name="mobile-web-app-capable" content="yes" />
+<!-- "default": barra de estado del iPhone clara con texto oscuro; el contenido no queda debajo -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Expediente" />
 
 <link rel="icon" href="assets/icon-192.png" />
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/svg+xml" href="assets/app-icon.svg" />
+<!-- Sin fuentes externas: se usa la tipografía del sistema (San Francisco en iPhone). -->
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -22,9 +27,10 @@
 <!-- ===================== PANTALLA DE LOGIN ===================== -->
 <section id="login-screen" class="screen">
   <div class="login-card">
-    <img src="assets/logo.svg" alt="Code-Reset" class="login-logo" />
-    <h1 class="login-title">CODE-RESET</h1>
-    <p class="login-subtitle" id="app-name-slot">Nombre de la app</p>
+    <img src="assets/dr-armando.jpg" alt="Dr. Armando Alejandro de la Fuente Escandón" class="login-foto" width="132" height="132" />
+    <h1 class="login-title">Dr. Armando Alejandro de la Fuente Escandón</h1>
+    <p class="login-especialidad">Ginecología y Obstetricia · Colposcopia</p>
+    <p class="login-subtitle" id="app-name-slot">Expediente Clínico</p>
 
     <form id="login-form" autocomplete="off">
       <label class="field">
@@ -48,15 +54,18 @@
 
 <!-- ===================== SHELL DE LA APP ===================== -->
 <section id="app-shell" class="screen" hidden>
+  <!-- Barra de navegación superior (estilo iOS) -->
   <header class="app-header">
-    <img src="assets/logo.svg" alt="Code-Reset" class="header-logo" />
-    <nav id="app-nav" class="app-nav"><!-- router.js pinta los links según los módulos registrados --></nav>
-    <button id="logout-btn" class="btn-ghost">Salir</button>
+    <span class="header-titulo">Expediente</span>
+    <button id="logout-btn" class="btn-texto">Salir</button>
   </header>
 
   <main id="app-content" class="app-content">
     <!-- router.js inyecta aquí la vista activa -->
   </main>
+
+  <!-- Barra de pestañas inferior (estilo iOS); router.js pinta las pestañas -->
+  <nav id="app-nav" class="tab-bar" aria-label="Secciones"></nav>
 </section>
 
 <script type="module" src="js/router.js"></script>

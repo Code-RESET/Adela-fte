@@ -1,0 +1,741 @@
+/* ============================================================
+   Expediente Clínico — estilo iOS (iPhone primero)
+   - Colores del sistema de iOS: claro por defecto y oscuro automático
+     según el ajuste del iPhone (prefers-color-scheme).
+   - Tipografía del sistema (San Francisco en Apple), sin fuentes externas.
+   - Navegación: barra superior + barra de pestañas inferior.
+   - Respeta el notch y la barra de inicio (env(safe-area-inset-*)).
+   Para cambiar el color principal basta con --accent.
+   ============================================================ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #F2F2F7;            /* fondo agrupado de iOS */
+  --bg-card: #FFFFFF;       /* celdas y tarjetas */
+  --bg-input: #F2F2F7;
+  --bg-bar: rgba(249, 249, 249, 0.86);
+  --text: #000000;
+  --text-dim: #6C6C70;      /* etiqueta secundaria */
+  --text-ter: #8E8E93;      /* etiqueta terciaria */
+  --border: #C6C6C8;        /* separador */
+  --border-soft: rgba(60, 60, 67, 0.18);
+  --accent: #007AFF;        /* azul del sistema */
+  --accent-tint: rgba(0, 122, 255, 0.12);
+  --on-accent: #FFFFFF;
+  --danger: #FF3B30;
+  --danger-tint: rgba(255, 59, 48, 0.12);
+  --ok: #248A3D;            /* verde accesible sobre fondo claro */
+  --ok-tint: rgba(52, 199, 89, 0.16);
+  --warn: #C93400;          /* naranja accesible sobre fondo claro */
+  --warn-tint: rgba(255, 149, 0, 0.15);
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font); /* compatibilidad con estilos viejos */
+
+  --radius: 12px;
+  --radius-sm: 10px;
+  --gap: 16px;
+  --tab-h: 50px;
+  --nav-h: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --bg-card: #1C1C1E;
+    --bg-input: #2C2C2E;
+    --bg-bar: rgba(22, 22, 24, 0.86);
+    --text: #FFFFFF;
+    --text-dim: #98989F;
+    --text-ter: #8E8E93;
+    --border: #38383A;
+    --border-soft: rgba(84, 84, 88, 0.6);
+    --accent: #0A84FF;
+    --accent-tint: rgba(10, 132, 255, 0.18);
+    --danger: #FF453A;
+    --danger-tint: rgba(255, 69, 58, 0.18);
+    --ok: #30D158;
+    --ok-tint: rgba(48, 209, 88, 0.18);
+    --warn: #FF9F0A;
+    --warn-tint: rgba(255, 159, 10, 0.18);
+    --sombra: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+    --bg: #000000;
+    --bg-card: #1C1C1E;
+    --bg-input: #2C2C2E;
+    --bg-bar: rgba(22, 22, 24, 0.86);
+    --text: #FFFFFF;
+    --text-dim: #98989F;
+    --text-ter: #8E8E93;
+    --border: #38383A;
+    --border-soft: rgba(84, 84, 88, 0.6);
+    --accent: #0A84FF;
+    --accent-tint: rgba(10, 132, 255, 0.18);
+    --danger: #FF453A;
+    --danger-tint: rgba(255, 69, 58, 0.18);
+    --ok: #30D158;
+    --ok-tint: rgba(48, 209, 88, 0.18);
+    --warn: #FF9F0A;
+    --warn-tint: rgba(255, 159, 10, 0.18);
+    --sombra: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* El atributo hidden SIEMPRE oculta, aunque otra regla ponga display:flex. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;            /* tamaño de cuerpo de iOS */
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  min-height: 100dvh;
+}
+
+a { color: var(--accent); }
+
+.screen { min-height: 100dvh; }
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(24px + var(--safe-top)) 20px calc(24px + var(--safe-bottom));
+}
+
+.login-card { width: 100%; max-width: 380px; text-align: center; }
+
+/* Foto del doctor */
+.login-foto {
+  display: block;
+  width: 132px;
+  height: 132px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--bg-card);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  margin: 0 0 4px;
+  color: var(--text);
+}
+.login-especialidad { color: var(--accent); font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+.login-subtitle { color: var(--text-dim); font-size: 15px; margin: 0 0 24px; }
+
+/* Campos del login como celdas agrupadas de iOS */
+#login-form {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-align: left;
+  box-shadow: var(--sombra);
+}
+
+.field {
+  display: block;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  border-bottom: 0.5px solid var(--border);
+}
+.field span { display: block; margin-bottom: 2px; }
+.field input {
+  width: 100%;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+}
+.field input:focus { outline: none; }
+
+#login-form .error-text { padding: 10px 16px 0; margin: 0; }
+#login-form .btn-primary { width: calc(100% - 32px); margin: 14px 16px 16px; }
+
+.login-footer { margin-top: 28px; font-size: 12px; color: var(--text-ter); line-height: 1.6; }
+.login-footer p { margin: 0; }
+.login-footer strong { color: var(--text-dim); font-weight: 600; }
+
+/* ============================================================
+   BOTONES
+   ============================================================ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 20px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 17px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.btn-primary:active { opacity: .75; transform: scale(0.98); }
+
+/* Botón "tintado" (secundario de iOS) */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;           /* objetivo táctil mínimo de Apple */
+  padding: 0 16px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-ghost:active { opacity: .6; }
+
+/* Botón de texto (como "Salir" en la barra superior) */
+.btn-texto {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 17px;
+  padding: 0 4px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.btn-texto:active { opacity: .5; }
+
+.btn-chico { width: auto; min-height: 44px; padding: 0 18px; font-size: 15px; margin: 0; }
+#borrar { background: var(--danger-tint); color: var(--danger); }
+button:disabled { opacity: .45; cursor: default; }
+
+.error-text { color: var(--danger); font-size: 13px; margin: 0 0 12px; }
+
+/* ============================================================
+   ESTRUCTURA: barra superior, contenido, barra de pestañas
+   ============================================================ */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(var(--nav-h) + var(--safe-top));
+  padding: var(--safe-top) 16px 0;
+  background: var(--bg-bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--border-soft);
+}
+.header-titulo { font-weight: 600; font-size: 17px; }
+
+.app-content {
+  padding: 8px 16px calc(var(--tab-h) + var(--safe-bottom) + 24px);
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-around;
+  height: calc(var(--tab-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: var(--bg-bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--border-soft);
+}
+.tab-bar a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--text-ter);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 500;
+}
+.tab-bar svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tab-bar a.active { color: var(--accent); }
+.tab-bar a.active svg { stroke-width: 2.1; }
+
+/* ============================================================
+   TIPOGRAFÍA DE PANTALLA
+   ============================================================ */
+.titulo {                    /* "Large Title" de iOS */
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.37px;
+  line-height: 1.15;
+  margin: 8px 0 4px;
+  color: var(--text);
+}
+.subtitulo {                 /* encabezado de grupo */
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-dim);
+  margin: 26px 16px 7px;
+}
+.tarjeta .subtitulo { margin: 0 0 6px; }
+.sub { color: var(--text-dim); font-size: 15px; margin: 0 0 14px; }
+.sub a { color: var(--accent); text-decoration: none; }
+.legal { font-size: 13px; color: var(--text-ter); margin: 24px 4px; line-height: 1.45; }
+.cargando { color: var(--text-dim); text-align: center; padding: 40px 0; }
+
+.cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.cabecera > div { min-width: 0; }
+.cabecera a:not(.btn-ghost):not(.btn-primary) { text-decoration: none; }
+
+/* ============================================================
+   TARJETAS, AVISOS, LISTAS
+   ============================================================ */
+.tarjeta {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: var(--sombra);
+}
+details.tarjeta summary {
+  cursor: pointer;
+  font-size: 17px;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+}
+details.tarjeta summary::-webkit-details-marker { display: none; }
+details.tarjeta summary::after { content: "›"; color: var(--text-ter); font-size: 22px; line-height: 1; transition: transform .2s; }
+details.tarjeta[open] summary::after { transform: rotate(90deg); }
+details.tarjeta[open] summary { margin-bottom: 12px; }
+
+.alerta {
+  background: var(--warn-tint);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+.alerta::before { content: "⚠︎ "; color: var(--warn); font-weight: 700; }
+.alerta a { color: var(--accent); }
+.alerta ul { margin: 8px 0 0; padding-left: 20px; }
+
+/* Lista agrupada (insetGrouped) */
+.lista-ios {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--sombra);
+}
+.lista-ios > .sub { padding: 14px 16px; margin: 0; }
+
+.fila-paciente {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 36px 11px 16px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 17px;
+  background: var(--bg-card);
+}
+.fila-paciente + .fila-paciente::before {   /* separador con sangría */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  border-top: 0.5px solid var(--border);
+}
+.fila-paciente::after {                       /* chevron › */
+  content: "›";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-52%);
+  color: var(--text-ter);
+  font-size: 24px;
+  font-weight: 300;
+}
+.fila-paciente:active { background: var(--bg-input); }
+.fila-paciente strong { font-weight: 400; }
+.fila-paciente > span { color: var(--text-dim); font-size: 15px; }
+
+.accesos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 16px 0; }
+.acceso {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  text-decoration: none;
+  background: var(--bg-card);
+  border: none;
+  border-radius: var(--radius);
+  padding: 16px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+}
+.acceso:active { background: var(--bg-input); }
+.acceso strong { color: var(--accent); font-weight: 600; }
+.acceso span { color: var(--text-dim); font-size: 13px; }
+
+/* Barra de búsqueda de iOS */
+.buscar {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 34px;
+  margin: 8px 0 16px;
+  background: rgba(118, 118, 128, 0.12) no-repeat 10px center / 16px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m20 20-4.8-4.8'/%3E%3C/svg%3E");
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 17px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.buscar::placeholder { color: var(--text-ter); }
+.buscar:focus { outline: none; }
+@media (prefers-color-scheme: dark) { .buscar { background-color: rgba(118, 118, 128, 0.24); } }
+
+.estado {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  vertical-align: middle;
+}
+.estado-borrador { background: var(--warn-tint); color: var(--warn); }
+.estado-firmada { background: var(--ok-tint); color: var(--ok); }
+.titulo .estado { font-size: 13px; position: relative; top: -6px; }
+
+.acciones { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+
+/* Barra de acciones de la nota: fija arriba de la barra de pestañas */
+.barra-acciones {
+  position: sticky;
+  bottom: calc(var(--tab-h) + var(--safe-bottom));
+  z-index: 10;
+  margin: 0 -16px;
+  padding: 10px 16px;
+  background: var(--bg-bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--border-soft);
+}
+
+/* ============================================================
+   FORMULARIOS (grupos de iOS)
+   ============================================================ */
+.seccion { border: none; padding: 0; margin: 0 0 8px; min-width: 0; }
+.seccion legend {
+  float: left;               /* hace que el legend se comporte como encabezado normal */
+  width: 100%;
+  padding: 0 16px;
+  margin: 18px 0 7px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-dim);
+}
+.seccion legend .num-norma { text-transform: none; }
+.seccion > .seccion-nota { clear: both; }
+.seccion > div {
+  clear: both;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px 2px;
+  box-shadow: var(--sombra);
+}
+.seccion-nota { color: var(--text-dim); font-size: 13px; margin: 0 16px 8px; }
+
+.rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 14px; }
+.campo { margin-bottom: 12px; min-width: 0; }
+.campo label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 5px; }
+.campo .control { display: flex; gap: 8px; align-items: flex-start; }
+
+.campo input, .campo textarea, .campo select, .med-fila input, .med-fila select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  background-color: var(--bg-input);
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 17px;           /* 16px o más evita el zoom automático de iOS */
+  -webkit-appearance: none;
+  appearance: none;
+}
+.campo select, .med-fila select {
+  padding-right: 32px;
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%238E8E93' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E");
+}
+.campo input[type="date"] { min-height: 44px; display: block; }
+.campo textarea { resize: vertical; min-height: 88px; line-height: 1.4; }
+.campo input:focus, .campo textarea:focus, .campo select:focus, .med-fila input:focus, .med-fila select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: var(--bg-card);
+}
+.campo input::placeholder, .med-fila input::placeholder { color: var(--text-ter); }
+
+.req { color: var(--danger); margin-left: 2px; }
+.num-norma { font-size: 11px; color: var(--text-ter); margin-left: 4px; white-space: nowrap; font-weight: 400; }
+.ayuda { display: block; color: var(--text-ter); font-size: 12px; margin-top: 5px; }
+
+/* Botón de micrófono */
+.mic {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-size: 19px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.mic:active { transform: scale(0.94); }
+.mic.on { background: var(--danger); color: #fff; animation: escuchando 1.3s infinite; }
+@keyframes escuchando {
+  0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.45); }
+  100% { box-shadow: 0 0 0 12px rgba(255, 59, 48, 0); }
+}
+.mic-no-disponible { opacity: .5; }
+/* Texto que se va reconociendo: en su propio renglón, debajo del campo
+   (antes, dentro de la fila, apretaba el campo hasta dejarlo angosto). */
+.campo .control, .med-fila .control { flex-wrap: wrap; }
+.dictado-parcial { flex: 1 0 100%; color: var(--text-dim); font-style: italic; font-size: 13px; }
+.dictado-parcial:empty { display: none; }
+
+/* Medicamentos */
+.med-fila {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.4fr 1fr auto;
+  gap: 8px;
+  align-items: start;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+.med-fila .control { display: flex; gap: 6px; min-width: 0; }
+.med-quitar { background: var(--danger-tint) !important; color: var(--danger) !important; }
+.med-agregar { margin-top: 10px; }
+
+/* ============================================================
+   LECTURA (nota firmada) Y HOJA IMPRIMIBLE
+   ============================================================ */
+.hoja {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  box-shadow: var(--sombra);
+}
+.hoja-encabezado {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 0.5px solid var(--border);
+  line-height: 1.45;
+}
+.hoja-tipo { text-align: right; }
+.hoja-paciente {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 16px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 0.5px solid var(--border);
+}
+.hoja-paciente span { display: block; color: var(--text-dim); font-size: 12px; }
+.hoja-paciente .ancho { grid-column: 1 / -1; }
+
+.lect-seccion h3 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--accent);
+  margin: 18px 0 6px;
+}
+.lect-seccion dl { margin: 0; }
+.lect-campo { margin-bottom: 10px; }
+.lect-campo dt { color: var(--text-dim); font-size: 13px; }
+.lect-campo dd { margin: 2px 0 0; line-height: 1.45; }
+.vacio { color: var(--text-ter); font-style: italic; }
+.med-leer { margin: 0; padding-left: 20px; }
+.med-leer li { margin-bottom: 4px; }
+
+.hoja-firma { margin-top: 44px; text-align: center; line-height: 1.6; }
+.hoja-firma .sub { font-size: 12px; margin-top: 6px; }
+.linea-firma { width: 260px; max-width: 80%; border-top: 1px solid var(--text); margin: 0 auto 6px; }
+.adenda { border-left: 3px solid var(--accent); padding: 4px 12px; margin-bottom: 12px; }
+.adenda .sub { font-size: 13px; margin-bottom: 2px; }
+
+/* Aviso flotante (estilo notificación iOS, arriba) */
+.toast {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--safe-top) + 10px);
+  transform: translateX(-50%);
+  z-index: 100;
+  max-width: calc(100vw - 32px);
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: var(--bg-bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  color: var(--text);
+  font-size: 15px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  animation: bajar .25s ease-out;
+}
+.toast-ok::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+.toast-error::before { content: "✕ "; color: var(--danger); font-weight: 700; }
+@keyframes bajar { from { opacity: 0; transform: translate(-50%, -12px); } }
+
+/* Botones Guardar / Imprimir del expediente */
+.botones-expediente { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 6px; }
+.botones-expediente .btn-primary, .botones-expediente .btn-ghost { min-height: 50px; font-size: 17px; gap: 8px; width: 100%; white-space: nowrap; }
+.botones-expediente svg, .btn-ghost svg {
+  width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto;
+}
+.nota-botones { font-size: 13px; margin: 0 4px 16px; }
+.btn-texto.chico { font-size: 13px; min-height: 32px; padding: 0; margin-top: 6px; }
+
+/* Contenedor que solo existe mientras se imprime */
+#impresion { display: none; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 640px) {
+  .med-fila { grid-template-columns: 1fr; }
+  .hoja-tipo { text-align: left; }
+  .titulo { font-size: 30px; }
+  .acciones .btn-ghost, .acciones .btn-primary { flex: 1; }
+}
+
+@media (min-width: 768px) {
+  .app-content { padding-left: 24px; padding-right: 24px; }
+  .barra-acciones { margin: 0 -24px; padding: 12px 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ============================================================
+   IMPRESIÓN: hoja blanca, sin barras
+   ============================================================ */
+@media print {
+  :root { color-scheme: light; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .app-header, .tab-bar, .no-imprimir, .toast, .barra-acciones { display: none !important; }
+  .app-content { padding: 0; max-width: none; }
+  .hoja { box-shadow: none; border-radius: 0; background: #fff; color: #000; padding: 0; font-family: Georgia, "Times New Roman", serif; font-size: 11pt; }
+  .hoja *, .lect-campo dt, .hoja-paciente span, .sub { color: #000 !important; }
+  .hoja-encabezado, .hoja-paciente { border-color: #999; }
+  .linea-firma { border-color: #000; }
+  .adenda { border-color: #000; }
+  .lect-seccion, .lect-campo { break-inside: avoid; }
+
+  /* Impresión del expediente completo o de una nota: solo la hoja */
+  body.imprimiendo > :not(#impresion) { display: none !important; }
+  body.imprimiendo #impresion { display: block; }
+  #impresion .hoja { break-after: page; page-break-after: always; margin: 0; }
+  #impresion .hoja:last-child { break-after: auto; page-break-after: auto; }
+}
+
+@page { size: letter; margin: 16mm; }
+
+/* ---------- Solo demo ---------- */
+.demo-aviso { font-size: 13px; color: var(--text-dim); background: var(--accent-tint); border-radius: 8px; padding: 8px 12px; margin: -12px 0 18px; }
+.demo-chip { font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-tint); border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
+body.vista-previa #impresion {
+  display: block; position: fixed; inset: 0; z-index: 300; overflow: auto;
+  background: var(--bg); padding: 0 max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px));
+}
+body.vista-previa #impresion .hoja { max-width: 820px; margin: 0 auto 20px; }
+.vista-previa-barra {
+  position: sticky; top: 0; z-index: 2; display: flex; gap: 12px; align-items: center; justify-content: space-between;
+  max-width: 820px; margin: 0 auto 16px; padding: 12px 0; background: var(--bg); font-size: 14px; color: var(--text-dim);
+}

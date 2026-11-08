@@ -1,0 +1,14 @@
+{
+  "name": "pruebas-reglas-expediente",
+  "private": true,
+  "type": "module",
+  "description": "Solo para probar firestore.rules. La app NO necesita npm.",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-expediente \"node --test rules.test.mjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0",
+    "firebase-tools": "^15.35.0"
+  }
+}

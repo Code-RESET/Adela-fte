@@ -1,25 +1,82 @@
-# Code-Reset Boilerplate
+# Expediente Clínico — Dr. Armando de la Fuente Escandón
 
-Esqueleto base para arrancar cualquier proyecto nuevo de Code-Reset: PWA en HTML/JS puro (ES6 modules), sin build, con Firebase Auth + Firestore, login con firma de desarrollador, router por hash y estructura modular.
+PWA de expediente clínico con dictado por voz, conforme a **NOM-004-SSA3-2012** (expediente clínico)
+y **NOM-024-SSA3-2012** (registro electrónico para la salud).
+Desarrollado por Code-Reset — Ing. Luis Ángel Díaz Bernal.
 
-## Cómo usar este repo
+- App: https://code-reset.github.io/Adela-fte/ (al activar GitHub Pages)
+- Demo con datos de ejemplo, sin Firebase: https://code-reset.github.io/Adela-fte/demo/
+- Contexto completo del proyecto (decisiones, normas, pendientes): [`docs/CONTEXTO.md`](docs/CONTEXTO.md)
 
-1. Sube esta carpeta a GitHub como repo nuevo (ej. `code-reset-boilerplate`).
-2. En **Settings → Template repository**, activa la casilla. Esto habilita el botón "Use this template".
-3. Para cada proyecto nuevo: "Use this template" → nombra el repo del cliente → clona.
-4. Edita `js/firebase-config.js` con el `firebaseConfig` real del proyecto (Firebase Console → Configuración del proyecto → Tus apps → SDK config).
-5. Cambia `<p id="app-name-slot">` en `index.html` por el nombre real de la app.
-6. Reemplaza `assets/logo.svg`, `icon-192.png` e `icon-512.png` si el cliente pide su propia marca (por default se usa la identidad Code-Reset).
-7. Activa GitHub Pages (Settings → Pages → rama `main`, carpeta `/root`).
-8. Sube el cambio de `CACHE_VERSION` en `service-worker.js` cada vez que actualices archivos base, para que los teléfonos ya instalados jalen la versión nueva.
+Stack: HTML + CSS + JS puro (ES6 modules), sin build. Firebase Auth + Firestore. Router por hash.
 
-## Cómo agregar un módulo nuevo
+Diseño estilo iOS para iPhone: colores y tipografía del sistema de Apple, barra de pestañas inferior,
+listas agrupadas, modo oscuro automático y respeto del notch. El color principal se cambia en `--accent`
+(`css/styles.css`). Ícono de la app: `assets/app-icon.svg` (los PNG se generan a partir de él).
 
-1. Copia `js/modules/dashboard.js` y renómbralo (ej. `clientes.js`).
-2. Escribe su lógica y su propio `render(container, user)`.
-3. Regístralo en `js/router.js` dentro del arreglo `MODULES`.
-4. Listo — aparece solo en el menú y en el routing, sin tocar nada más.
+## Qué hace (fase 1)
 
-## Reglas de Firestore (pendiente por proyecto)
+- **Mi consultorio:** datos del médico (nombre, cédula) y del establecimiento, que van en cada nota.
+- **Pacientes:** ficha de identificación (NOM-004 5.2.3 + NOM-024 Tabla 1), número de expediente consecutivo y búsqueda.
+- **Historia clínica** (NOM-004 6.1) y **nota de evolución** (6.2), en el orden de la norma, con antecedentes gineco-obstétricos y control prenatal.
+- **Dictado por campo** (🎤) con el reconocimiento de voz del navegador (es-MX). Gratis; mejor en Chrome; necesita internet.
+- **Autoguardado** del borrador.
+- **Firmar:** no deja firmar si falta un dato obligatorio de la norma; avisa si hay abreviaturas (5.11).
+  La nota firmada queda **bloqueada**; se corrige con **adenda**.
+- **Guardar** el expediente completo en PDF (portada con ficha e índice + cada nota firmada con sus adendas).
+  En iPhone abre "Compartir" (Guardar en Archivos, AirDrop, Mail, WhatsApp); en PC lo descarga.
+  También se puede guardar una sola nota. jsPDF va dentro del repo (`js/vendor/`, licencia MIT) para funcionar sin internet.
+- **Imprimir** el expediente completo o una nota, con encabezado del consultorio y línea para firma autógrafa.
+- **Exportar** los datos de un paciente (JSON) — NOM-024 6.6.6.
+- **Bitácora** de auditoría de solo agregar — NOM-024 6.6.1.
 
-Este boilerplate no trae `firestore.rules` porque los permisos dependen de los roles de cada cliente. Escribirlas antes de entregar — recordar el bug real detectado en NEXORA: la función `puede()` de permisos existía pero nunca se llamaba, y todos los usuarios terminaban con acceso de admin.
+Detalle norma → campo: [`docs/requisitos-nom-004.md`](docs/requisitos-nom-004.md).
+Las definiciones de los formularios están en `js/formatos-nom004.js`: para mover o agregar un campo se edita ese archivo.
+
+## Estructura
+
+```
+index.html, manifest.json, service-worker.js, css/styles.css
+js/firebase-config.js   credenciales (+ modo emulador solo en localhost)
+js/auth.js              login / logout
+js/router.js            rutas #/modulo/param (MODULES)
+js/db.js                todo el acceso a Firestore
+js/formatos-nom004.js   campos de cada formato, con su numeral de la norma
+js/formulario.js        pinta y lee formularios a partir de los formatos
+js/dictado.js           dictado por voz
+js/documento-expediente.js  PDF e impresión del expediente / de una nota
+js/vendor/              jsPDF 4.2.1 (MIT)
+js/util.js              utilidades (esc() contra XSS, fechas, edad)
+js/modules/             dashboard, pacientes, paciente, nota, configuracion
+firestore.rules         reglas de seguridad
+tests/rules.test.mjs    pruebas de las reglas (emulador)
+prueba-dictado.html     página aislada para probar el micrófono
+```
+
+## Puesta en marcha
+
+1. Crear proyecto en Firebase. Al crear Firestore, elegir la región más cercana a México disponible.
+2. Pegar el `firebaseConfig` real en `js/firebase-config.js`.
+3. Authentication → habilitar **Correo/contraseña** y crear la cuenta del doctor desde la consola.
+4. Publicar las reglas: `firebase deploy --only firestore:rules` (o copiar `firestore.rules` en la consola).
+5. Publicar el sitio: Settings → Pages → Deploy from a branch → `main` → `/(root)`.
+6. Entrar, llenar **Consultorio** y empezar.
+7. Subir `CACHE_VERSION` en `service-worker.js` cada vez que cambien archivos base.
+
+## Pruebas
+
+Requiere Java (para el emulador). Solo para desarrollo; la app no usa npm.
+
+```bash
+cd tests && npm install && npm test        # reglas de Firestore (16 pruebas)
+```
+
+Probar la app completa contra emuladores: `firebase emulators:start --only firestore,auth --project demo-expediente`,
+servir la carpeta (`python3 -m http.server 5173`) y abrir `http://localhost:5173/?emulador`.
+
+## Pendientes conocidos
+
+- Firma electrónica avanzada (e.firma), segundo factor de autenticación, consentimiento de aviso de privacidad,
+  catálogo CIE-10 y Cuadro Básico — ver `docs/requisitos-nom-004.md` §11–12.
+- Fase 2: dictado libre con IA (Claude) a través de un intermediario (Cloudflare Worker). La API key nunca va en el front-end.
+- El médico revisa y firma cada nota y es responsable de su contenido.

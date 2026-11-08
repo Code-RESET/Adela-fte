@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Prueba de dictado — Code-Reset</title>
+<meta name="color-scheme" content="light dark" />
+<!--
+  prueba-dictado.html
+  Página AISLADA (no usa Firebase ni el router) para probar el micrófono
+  y el reconocimiento de voz del navegador en el teléfono/PC del doctor.
+  No guarda nada: los datos se pierden al recargar. NO usar con datos
+  reales de pacientes.
+-->
+<style>
+  :root {
+    --bg: #F2F2F7; --card: #fff; --border: #C6C6C8;
+    --accent: #007AFF; --text: #000; --dim: #6C6C70;
+    --danger: #FF3B30; --warn: #C93400; --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #000; --card: #1C1C1E; --border: #38383A; --accent: #0A84FF;
+            --text: #fff; --dim: #98989F; --danger: #FF453A; --warn: #FF9F0A; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 16px; max-width: 760px; margin-inline: auto;
+  }
+  h1 { font-size: 1.2rem; color: var(--accent); margin: 8px 0 4px; }
+  .sub { color: var(--dim); font-size: .85rem; margin: 0 0 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 1rem; margin: 0 0 12px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: .85rem; color: var(--dim); margin-bottom: 4px; }
+  .row { display: flex; gap: 8px; align-items: flex-start; }
+  .row textarea, .row input {
+    flex: 1; min-width: 0; background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    font: inherit; font-size: 16px; /* 16px evita el zoom automático en iOS */
+  }
+  .row textarea { min-height: 64px; resize: vertical; }
+  .mic {
+    flex: 0 0 48px; height: 48px; border-radius: 50%;
+    border: 1px solid var(--accent); background: transparent; color: var(--accent);
+    font-size: 1.3rem; cursor: pointer;
+  }
+  .mic.on { background: var(--danger); border-color: var(--danger); color: #fff; animation: pulso 1s infinite; }
+  .mic:disabled { opacity: .3; cursor: not-allowed; }
+  @keyframes pulso { 50% { opacity: .6; } }
+  .interim { color: var(--dim); font-style: italic; font-size: .8rem; min-height: 1em; margin-top: 4px; }
+  ul.diag { list-style: none; padding: 0; margin: 0; font-size: .85rem; }
+  ul.diag li { padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+  ul.diag li:last-child { border-bottom: 0; }
+  .ok { color: #248A3D; } .bad { color: var(--danger); } .warn { color: var(--warn); }
+  #log { font-family: ui-monospace, monospace; font-size: .75rem; color: var(--dim);
+         white-space: pre-wrap; max-height: 160px; overflow: auto; margin: 0; }
+  button.sec { background: transparent; color: var(--dim); border: 1px solid var(--border);
+               border-radius: 8px; padding: 8px 12px; font: inherit; cursor: pointer; }
+  footer { color: var(--dim); font-size: .75rem; text-align: center; margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<h1>Prueba de dictado por campo</h1>
+<p class="sub">Toca 🎤, habla y vuelve a tocar para detener. Solo es para probar el micrófono; no guarda nada.</p>
+
+<div class="card">
+  <h2>Diagnóstico</h2>
+  <ul class="diag" id="diag"></ul>
+  <p style="margin:12px 0 0"><button class="sec" id="btn-permiso">Pedir permiso de micrófono</button></p>
+</div>
+
+<div class="card">
+  <h2>Campos de ejemplo</h2>
+  <div id="campos"></div>
+</div>
+
+<div class="card">
+  <h2>Registro de eventos</h2>
+  <pre id="log"></pre>
+</div>
+
+<footer>Desarrollado por: Ing. Luis Ángel Díaz Bernal · Compañía: CODE-RESET</footer>
+
+<script>
+// ---------- Campos de prueba (NO son el formulario final de la NOM-004) ----------
+const CAMPOS = [
+  { id: "motivo",       label: "Motivo de consulta",       multi: true },
+  { id: "padecimiento", label: "Padecimiento actual",      multi: true },
+  { id: "ta",           label: "Tensión arterial",         multi: false },
+  { id: "peso",         label: "Peso (kg)",                multi: false },
+  { id: "fum",          label: "Fecha de última menstruación (FUM)", multi: false },
+  { id: "diagnostico",  label: "Diagnóstico",              multi: true },
+];
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const logEl = document.getElementById("log");
+function log(msg) {
+  const t = new Date().toLocaleTimeString("es-MX");
+  logEl.textContent = `[${t}] ${msg}\n` + logEl.textContent;
+}
+
+// ---------- Diagnóstico: dice POR QUÉ falla en vez de adivinar ----------
+function enIframe() {
+  try { return window.self !== window.top; } catch { return true; }
+}
+
+async function estadoPermiso() {
+  try {
+    const p = await navigator.permissions.query({ name: "microphone" });
+    return p.state; // granted | denied | prompt
+  } catch { return "desconocido"; } // Safari/Firefox no siempre lo soportan
+}
+
+async function pintarDiagnostico() {
+  const ua = navigator.userAgent;
+  const navegador =
+    /SamsungBrowser/.test(ua) ? "Samsung Internet" :
+    /CriOS/.test(ua) ? "Chrome en iOS" :
+    /Edg\//.test(ua) ? "Edge" :
+    /Chrome\//.test(ua) ? "Chrome" :
+    /Firefox\//.test(ua) ? "Firefox" :
+    /Safari\//.test(ua) ? "Safari" : "Otro";
+
+  const permiso = await estadoPermiso();
+  const items = [
+    [SR ? "ok" : "bad", "Reconocimiento de voz",
+      SR ? "Disponible" : "Este navegador no lo trae. Usa Chrome (Android/PC) o Safari (iOS 14.5+)."],
+    [window.isSecureContext ? "ok" : "bad", "Conexión segura (HTTPS)",
+      window.isSecureContext ? "Sí" : "No. El micrófono solo funciona en https:// (GitHub Pages ya lo es)."],
+    [enIframe() ? "bad" : "ok", "Página abierta directa",
+      enIframe() ? "Está dentro de otra página (iframe/vista previa). Ábrela directo en el navegador." : "Sí"],
+    [navigator.onLine ? "ok" : "bad", "Internet",
+      navigator.onLine ? "Conectado" : "Sin conexión. El dictado de Chrome necesita internet."],
+    [permiso === "granted" ? "ok" : permiso === "denied" ? "bad" : "warn", "Permiso de micrófono",
+      { granted: "Concedido", denied: "Bloqueado. Actívalo en el candado 🔒 de la barra de direcciones.",
+        prompt: "Aún no se ha pedido", desconocido: "El navegador no lo reporta; se pedirá al dictar." }[permiso]],
+    [navegador === "Chrome" ? "ok" : "warn", "Navegador", navegador +
+      (navegador === "Chrome" ? "" : " (Chrome es el que mejor reconoce español)")],
+  ];
+  document.getElementById("diag").innerHTML = items.map(([c, k, v]) =>
+    `<li><span class="${c}">${c === "ok" ? "✔" : c === "bad" ? "✖" : "!"}</span><span><strong>${k}:</strong> ${v}</span></li>`
+  ).join("");
+}
+
+document.getElementById("btn-permiso").addEventListener("click", async () => {
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+    s.getTracks().forEach(t => t.stop());
+    log("Permiso de micrófono concedido.");
+  } catch (e) {
+    log(`Permiso negado: ${e.name} — ${e.message}`);
+  }
+  pintarDiagnostico();
+});
+
+// ---------- Campos con botón de micrófono ----------
+const contenedor = document.getElementById("campos");
+contenedor.innerHTML = CAMPOS.map(c => `
+  <div class="field">
+    <label for="${c.id}">${c.label}</label>
+    <div class="row">
+      ${c.multi ? `<textarea id="${c.id}"></textarea>` : `<input id="${c.id}" type="text" />`}
+      <button class="mic" data-campo="${c.id}" aria-label="Dictar ${c.label}" ${SR ? "" : "disabled"}>🎤</button>
+    </div>
+    <div class="interim" id="${c.id}-interim"></div>
+  </div>`).join("");
+
+let rec = null;        // reconocimiento activo (solo uno a la vez)
+let campoActivo = null;
+
+const ERRORES = {
+  "not-allowed": "Micrófono bloqueado (permiso negado o página dentro de un iframe).",
+  "service-not-allowed": "El navegador no permite el servicio de voz aquí.",
+  "no-speech": "No se detectó voz. Habla más cerca del micrófono.",
+  "audio-capture": "No se encontró micrófono en el equipo.",
+  "network": "Falló la conexión con el servicio de reconocimiento (requiere internet).",
+  "aborted": "Dictado cancelado.",
+  "language-not-supported": "El idioma es-MX no está disponible en este navegador.",
+};
+
+function detener() {
+  if (rec) rec.stop();
+}
+
+function iniciar(campoId) {
+  const input = document.getElementById(campoId);
+  const interim = document.getElementById(`${campoId}-interim`);
+  const boton = contenedor.querySelector(`[data-campo="${campoId}"]`);
+
+  rec = new SR();
+  rec.lang = "es-MX";
+  rec.continuous = true;      // sigue escuchando hasta que el doctor lo detenga
+  rec.interimResults = true;  // muestra el texto mientras habla
+  campoActivo = campoId;
+
+  const base = input.value ? input.value.trimEnd() + " " : "";
+  let finalTxt = "";
+
+  rec.onstart = () => { boton.classList.add("on"); log(`Escuchando: ${campoId}`); };
+  rec.onresult = (ev) => {
+    let parcial = "";
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      if (r.isFinal) finalTxt += r[0].transcript;
+      else parcial += r[0].transcript;
+    }
+    input.value = base + finalTxt;
+    interim.textContent = parcial;
+  };
+  rec.onerror = (ev) => log(`Error (${ev.error}): ${ERRORES[ev.error] || "desconocido"}`);
+  rec.onend = () => {
+    boton.classList.remove("on");
+    interim.textContent = "";
+    log(`Detenido: ${campoId}`);
+    rec = null; campoActivo = null;
+    pintarDiagnostico(); // el permiso pudo cambiar
+  };
+
+  try { rec.start(); }
+  catch (e) { log(`No se pudo iniciar: ${e.message}`); }
+}
+
+contenedor.addEventListener("click", (e) => {
+  const b = e.target.closest(".mic");
+  if (!b) return;
+  const id = b.dataset.campo;
+  if (campoActivo === id) return detener();        // mismo campo: detener
+  if (rec) { rec.onend = null; rec.abort();         // otro campo: cambiar
+    contenedor.querySelectorAll(".mic.on").forEach(x => x.classList.remove("on")); rec = null; }
+  iniciar(id);
+});
+
+window.addEventListener("online", pintarDiagnostico);
+window.addEventListener("offline", pintarDiagnostico);
+pintarDiagnostico();
+log("Página lista.");
+</script>
+</body>
+</html>

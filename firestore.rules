@@ -1,0 +1,116 @@
+rules_version = '2';
+
+// ============================================================
+// Reglas de seguridad — Expediente clínico (NOM-004 / NOM-024)
+//
+// Principios:
+//  1. Cada médico SOLO ve y escribe bajo medicos/{su uid}.
+//     esDueno(uid) se llama en TODAS las reglas (lección de un proyecto anterior:
+//     una función de permisos que existe pero no se llama no protege).
+//  2. Nota firmada = inalterable (NOM-004 5.11, NOM-024 6.3.4 y 6.6.2).
+//     Solo se le pueden agregar adendas.
+//  3. Nada clínico se borra (conservación 5 años, NOM-004 5.4);
+//     solo los borradores sin firmar.
+//  4. La bitácora es de solo agregar (NOM-024 6.6.1, trazabilidad).
+//  5. Todo lo que no está permitido aquí está negado.
+// Pruebas: tests/rules.test.mjs
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function esDueno(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function noCambia(campo) {
+      return !(campo in resource.data)
+        ? !(campo in request.resource.data)
+        : (campo in request.resource.data && request.resource.data[campo] == resource.data[campo]);
+    }
+
+    function tipoNotaValido(t) {
+      return t in ['historia_clinica', 'evolucion'];
+    }
+
+    // ---------- Perfil del médico ----------
+    match /medicos/{uid} {
+      allow read: if esDueno(uid);
+      allow create: if esDueno(uid);
+      // El contador de expedientes solo puede avanzar.
+      allow update: if esDueno(uid)
+        && (!('siguienteExpediente' in resource.data)
+            || request.resource.data.siguienteExpediente >= resource.data.siguienteExpediente);
+      allow delete: if false;
+
+      // ---------- Bitácora ----------
+      match /bitacora/{id} {
+        allow read: if esDueno(uid);
+        allow create: if esDueno(uid)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.fecha == request.time
+          && request.resource.data.accion is string;
+        allow update, delete: if false;
+      }
+
+      // ---------- Pacientes ----------
+      match /pacientes/{pid} {
+        allow read: if esDueno(uid);
+        allow create: if esDueno(uid)
+          && request.resource.data.numeroExpediente is int
+          && request.resource.data.nombre is string
+          && request.resource.data.primerApellido is string;
+        allow update: if esDueno(uid)
+          && noCambia('numeroExpediente')
+          && noCambia('creadoEn');
+        allow delete: if false;
+
+        // ---------- Notas ----------
+        match /notas/{nid} {
+          allow read: if esDueno(uid);
+
+          allow create: if esDueno(uid)
+            && request.resource.data.estado == 'borrador'
+            && tipoNotaValido(request.resource.data.tipo)
+            && !('firma' in request.resource.data)
+            && !('firmadaEn' in request.resource.data);
+
+          // Solo se edita un BORRADOR. Puede seguir como borrador o firmarse.
+          allow update: if esDueno(uid)
+            && resource.data.estado == 'borrador'
+            && noCambia('tipo')
+            && noCambia('creadaEn')
+            && (
+              // sigue en borrador
+              (request.resource.data.estado == 'borrador'
+                && !('firma' in request.resource.data)
+                && !('firmadaEn' in request.resource.data))
+              ||
+              // se firma: hora del servidor y firmante = usuario autenticado
+              (request.resource.data.estado == 'firmada'
+                && request.resource.data.firmadaEn == request.time
+                && request.resource.data.firma.uid == request.auth.uid
+                && request.resource.data.firma.nombre is string
+                && request.resource.data.firma.cedula is string
+                && request.resource.data.paciente.numeroExpediente is int)
+            );
+
+          // Solo se borra un borrador; una nota firmada se conserva.
+          allow delete: if esDueno(uid) && resource.data.estado == 'borrador';
+
+          // ---------- Adendas (correcciones a notas firmadas) ----------
+          match /adendas/{aid} {
+            allow read: if esDueno(uid);
+            allow create: if esDueno(uid)
+              && get(/databases/$(database)/documents/medicos/$(uid)/pacientes/$(pid)/notas/$(nid)).data.estado == 'firmada'
+              && request.resource.data.creadaEn == request.time
+              && request.resource.data.autor.uid == request.auth.uid
+              && request.resource.data.texto is string
+              && request.resource.data.texto.size() > 0;
+            allow update, delete: if false;
+          }
+        }
+      }
+    }
+  }
+}

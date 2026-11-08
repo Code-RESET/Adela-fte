@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Expediente Dr. de la Fuente</title>
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="assets/icon-192.png" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<!-- ===================== PANTALLA DE LOGIN ===================== -->
+<section id="login-screen" class="screen">
+  <div class="login-card">
+    <img src="assets/dr-armando.jpg" alt="Dr. Armando Alejandro de la Fuente Escandón" class="login-foto" width="132" height="132" />
+    <h1 class="login-title">Dr. Armando Alejandro de la Fuente Escandón</h1>
+    <p class="login-especialidad">Ginecología y Obstetricia · Colposcopia</p>
+    <p class="login-subtitle" id="app-name-slot">Expediente Clínico</p>
+    <p class="demo-aviso">Demo con datos de ejemplo. Toca Entrar.</p>
+
+    <form id="login-form" autocomplete="off">
+      <label class="field">
+        <span>Correo</span>
+        <input type="email" id="login-email" required autocomplete="username" value="demo@consultorio.mx" />
+      </label>
+      <label class="field">
+        <span>Contraseña</span>
+        <input type="password" id="login-password" required autocomplete="current-password" value="demo1234" />
+      </label>
+      <p id="login-error" class="error-text" hidden></p>
+      <button type="submit" id="login-btn" class="btn-primary">Entrar</button>
+    </form>
+
+    <footer class="login-footer">
+      <p>Desarrollado por: <strong>Ing. Luis Ángel Díaz Bernal</strong></p>
+      <p>Compañía: <strong>CODE-RESET</strong></p>
+    </footer>
+  </div>
+</section>
+
+<!-- ===================== SHELL DE LA APP ===================== -->
+<section id="app-shell" class="screen" hidden>
+  <!-- Barra de navegación superior (estilo iOS) -->
+  <header class="app-header">
+    <span class="header-titulo">Expediente <span class="demo-chip">Demo</span></span>
+    <button id="logout-btn" class="btn-texto">Salir</button>
+  </header>
+
+  <main id="app-content" class="app-content">
+    <!-- router.js inyecta aquí la vista activa -->
+  </main>
+
+  <!-- Barra de pestañas inferior (estilo iOS); router.js pinta las pestañas -->
+  <nav id="app-nav" class="tab-bar" aria-label="Secciones"></nav>
+</section>
+
+<script type="module" src="js/router.js"></script>
+<script type="module" src="js/auth.js"></script>
+</body>
+</html>
